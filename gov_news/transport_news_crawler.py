@@ -51,23 +51,28 @@ class TransportNewsCrawler:
         return news_url_dict
     
     def get_news(self):
-        news_url_dict = self.get_news_url_dict()
-        news_lst = []
-        for title, url in news_url_dict.items():
-            html_text = get_html_from_url(url=url)
-            soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
-            # 获取文章内容所在的div
-            div = soup.find('div', id='Zoom')
-            # 定位包含文章段落的span标签
-            span_tags = div.find_all('span', style='line-height: 2em;') # type: ignore
-            text = "".join([span_tag.get_text(strip=True) for span_tag in span_tags])
-            title, publish_date = title.split(";")
-            news_lst.append(News(title=title, 
-                                 url=url,
-                                 origin='交通部', 
-                                 summary=text, 
-                                 publish_date=publish_date))
-        return NewsResponse(news_list=news_lst)
+        try:
+            news_url_dict = self.get_news_url_dict()
+            news_lst = []
+            for title, url in news_url_dict.items():
+                html_text = get_html_from_url(url=url)
+                soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
+                # 获取文章内容所在的div
+                div = soup.find('div', id='Zoom')
+                p_tags = div.find_all('p') # type: ignore
+                text = "".join([p_tag.get_text(strip=True) for p_tag in p_tags])
+                # # 定位包含文章段落的span标签
+                # span_tags = div.find_all('span', style='line-height: 2em;') # type: ignore
+                # text = "".join([span_tag.get_text(strip=True) for span_tag in span_tags])
+                title, publish_date = title.split(";")
+                news_lst.append(News(title=title, 
+                                    url=url,
+                                    origin='交通部', 
+                                    summary=text, 
+                                    publish_date=publish_date))
+            return NewsResponse(news_list=news_lst)
+        except Exception as e:
+            return NewsResponse(news_list=None, status="ERROR", err_code="500", err_info=f"{str(e)}")
 
 
 if __name__ == '__main__':

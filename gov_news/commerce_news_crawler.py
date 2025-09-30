@@ -158,7 +158,6 @@ class CommerceNewsCrawler:
         except RuntimeError as e:
             print(e)
         
-
     def get_news(self):
         try:
             ldrhd_news_url_dict = self.get_news_url_dict(child_url=r'xwfb/ldrhd/index.html')
@@ -179,7 +178,7 @@ class CommerceNewsCrawler:
                                      publish_date=publish_date))
             return NewsResponse(news_list=news_lst)
         except RuntimeError as e:
-            return NewsResponse(news_list=None, status="ERROR", err_code='400', err_info=f"{str(e)}")
+            return NewsResponse(news_list=None, status="ERROR", err_code='500', err_info=f"{str(e)}")
 
 if __name__ == '__main__':
     url = r'https://www.mofcom.gov.cn/'
