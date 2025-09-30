@@ -160,23 +160,26 @@ class CommerceNewsCrawler:
         
 
     def get_news(self):
-        ldrhd_news_url_dict = self.get_news_url_dict(child_url=r'xwfb/ldrhd/index.html')
-        bldhd_news_url_dict = self.get_news_url_dict(child_url=r'xwfb/bldhd/index.html')
-        merged = {** ldrhd_news_url_dict, ** bldhd_news_url_dict} # type: ignore
-        news_lst = []
-        for title, url in merged.items():
-            html_text = get_html_from_url(url=url)
-            soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
-            div = soup.find('div', class_='art-con art-con-bottonmLine')
-            p_tags = div.find_all('p', style='text-align: justify; text-indent: 2em;') # type: ignore
-            text = "".join([p.get_text(strip=True) for p in p_tags])
-            title, publish_date = title.split(";")
-            news_lst.append(News(title=title, 
-                                 url=url,
-                                 origin='商务部', 
-                                 summary=text, 
-                                 publish_date=publish_date))
-        return NewsResponse(news_list=news_lst)
+        try:
+            ldrhd_news_url_dict = self.get_news_url_dict(child_url=r'xwfb/ldrhd/index.html')
+            bldhd_news_url_dict = self.get_news_url_dict(child_url=r'xwfb/bldhd/index.html')
+            merged = {** ldrhd_news_url_dict, ** bldhd_news_url_dict} # type: ignore
+            news_lst = []
+            for title, url in merged.items():
+                html_text = get_html_from_url(url=url)
+                soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
+                div = soup.find('div', class_='art-con art-con-bottonmLine')
+                p_tags = div.find_all('p', style='text-align: justify; text-indent: 2em;') # type: ignore
+                text = "".join([p.get_text(strip=True) for p in p_tags])
+                title, publish_date = title.split(";")
+                news_lst.append(News(title=title, 
+                                     url=url,
+                                     origin='商务部', 
+                                     summary=text, 
+                                     publish_date=publish_date))
+            return NewsResponse(news_list=news_lst)
+        except RuntimeError as e:
+            return NewsResponse(news_list=None, status="ERROR", err_code='400', err_info=f"{str(e)}")
 
 if __name__ == '__main__':
     url = r'https://www.mofcom.gov.cn/'
