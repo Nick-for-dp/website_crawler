@@ -137,7 +137,7 @@ class CommerceNewsCrawler:
             # 通过请求获取实际需要的html页面
             html_snippet = self.simulate_request(index_url=url, api_url=api_url, request_params=params) # type: ignore
             html_snippet_soup = BeautifulSoup(html_snippet, "html5lib")
-            few_days = get_few_days_ago(day_offset=2)
+            few_days = get_few_days_ago(day_offset=1)
             news_url_dict = {}
             for li in html_snippet_soup.select("ul.txtList_01 li, ul.txtList_02 li, ul.txtList_03 li"):
                 a_tag = li.find("a")
@@ -176,7 +176,10 @@ class CommerceNewsCrawler:
                                      origin='商务部', 
                                      summary=text, 
                                      publish_date=publish_date))
-            return NewsResponse(news_list=news_lst)
+            if len(news_lst) > 0: 
+                return NewsResponse(news_list=news_lst)
+            else:
+                return NewsResponse(news_list=None, status="OK", err_code=None, err_info="有效时限内未有新闻")
         except RuntimeError as e:
             return NewsResponse(news_list=None, status="ERROR", err_code='500', err_info=f"{str(e)}")
 

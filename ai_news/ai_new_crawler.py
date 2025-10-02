@@ -83,8 +83,8 @@ class AiNewsCrawler:
                     news_lst.append(news)
             
             # 构造最终返回结果 简要和详细内容
-            result = NewsResponse(news_list=news_lst)
-        except RuntimeError as e:
+            result = NewsResponse(news_list=news_lst) if len(news_lst) > 0 else NewsResponse(news_list=None, status="OK", err_code=None, err_info="未在时效范围内爬取到数据")
+        except Exception as e:
             result = NewsResponse(news_list=None, status='ERROR', err_code='500', err_info=f'{str(e)}')
         return result
 

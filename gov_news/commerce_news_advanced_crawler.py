@@ -39,7 +39,7 @@ class CommerceNewsAdvancedCrawler:
     def get_news_url_dict(self, child_url):
         """使用Selenium获取新闻URL字典"""
         url = join_urls(self.url, child_url=child_url)
-        few_days = get_few_days_ago(day_offset=4)
+        few_days = get_few_days_ago(day_offset=1)
         news_url_dict = {}
         
         driver = self._setup_driver()
@@ -141,8 +141,8 @@ class CommerceNewsAdvancedCrawler:
             except Exception as e:
                 print(f"处理新闻内容时出错 {url}: {str(e)}")
                 continue
-        
-        return NewsResponse(news_list=news_lst)
+        result = NewsResponse(news_list=news_lst) if len(news_lst) > 0 else NewsResponse(news_list=None, status="OK", err_code=None, err_info="未在时效范围内爬取到数据")
+        return result
 
 
 if __name__ == '__main__':

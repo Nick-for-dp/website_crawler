@@ -70,7 +70,10 @@ class TransportNewsCrawler:
                                     origin='交通部', 
                                     summary=text, 
                                     publish_date=publish_date))
-            return NewsResponse(news_list=news_lst)
+            if len(news_lst) > 0:
+                return NewsResponse(news_list=news_lst)
+            else:
+                return NewsResponse(news_list=None, status="OK", err_code=None, err_info="未在时效范围内爬取到数据")
         except Exception as e:
             return NewsResponse(news_list=None, status="ERROR", err_code="500", err_info=f"{str(e)}")
 
