@@ -3,7 +3,7 @@ sys.path.append(".")
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
-from utils import get_html_from_url
+from utils import get_html_from_url, get_html_from_shtml_url
 from model import News, NewsResponse
 
 
@@ -12,6 +12,39 @@ class CCTVNewsCrawler:
                  url: str):
         super(CCTVNewsCrawler, self).__init__()
         self.url = url
+    
+    @staticmethod
+    def get_yesterday_str(type=1):
+        yesterday = datetime.today() - timedelta(days=1)
+        if type == 1:
+            month, day = yesterday.month, yesterday.day
+            year_str = str(yesterday.year)
+            month_str = str(month) if len(str(month)) > 1 else f'0{str(month)}'
+            day_str = str(day) if len(str(day)) > 1 else f'0{str(day)}'
+            yesterday_str = f'{year_str}{month_str}{day_str}'
+        else:
+            yesterday_str = datetime.strftime(yesterday, r"%Y-%m-%d")
+        return yesterday_str
+    
+    def get_news_url_dict_advanced(self):
+        yesterday_str = self.get_yesterday_str(type=1)
+        url = f"{self.url}day/{yesterday_str}.shtml"
+        print(url)
+        html_text = get_html_from_shtml_url(url=url)
+        soup = BeautifulSoup(html_text.encode('utf-8'), "html.parser")  # type: ignore
+        li_tags = soup.find_all('li') # type: ignore
+        news_dict = {}
+        for idx, li_tag in enumerate(li_tags):
+            # 跳过第一个视频链接
+            if idx == 0:
+                continue
+            a_tag = li_tag.find('a') # type: ignore
+            # 获取新闻详细内容的url
+            href = a_tag.get('href', None) # type: ignore
+            # 获取新闻标题，处理后作为新闻内容摘要
+            title = a_tag.get('title', None)[4:] # type: ignore
+            news_dict[title] = href
+        return news_dict
     
     def get_news_dict(self):
         html_text = get_html_from_url(url=self.url)
@@ -39,7 +72,8 @@ class CCTVNewsCrawler:
         汇总新闻摘要和新闻详情, 转化为形成api输出类
         """
         try:
-            news_dict = self.get_news_dict()
+            # news_dict = self.get_news_dict()
+            news_dict = self.get_news_url_dict_advanced()
             news_list = []
             for title, url in news_dict.items():
                 child_html_text = get_html_from_url(url=url)
@@ -50,9 +84,7 @@ class CCTVNewsCrawler:
                 for p_tag in p_tags:
                     child_content += p_tag.get_text(strip=True)
                 # 新闻联播时间是t-1
-                today = datetime.today()
-                yesterday = today - timedelta(days=1)
-                yesterday_str = datetime.strftime(yesterday, r"%Y-%m-%d")
+                yesterday_str = self.get_yesterday_str(type=2)
                 news = News(title=title, 
                             url=url, 
                             origin='新闻联播', 
@@ -66,7 +98,7 @@ class CCTVNewsCrawler:
 
 
 if __name__ == "__main__":
-    url = r"https://tv.cctv.com/lm/xwlb/index.shtml"
+    url = r"https://tv.cctv.com/lm/xwlb/"
     crawler = CCTVNewsCrawler(url=url)
     results = crawler.get_news()
     print(results)

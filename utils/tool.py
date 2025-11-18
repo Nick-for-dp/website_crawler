@@ -87,9 +87,21 @@ def get_html_from_url(url: Optional[str],
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type:
                 logger.warning(f"响应内容类型不是HTML: {content_type}")
-            response.encoding = response.apparent_encoding
+            
+            # 优化编码检测逻辑
+            # 1. 优先使用响应头中声明的编码
+            if response.encoding and response.encoding != 'ISO-8859-1':
+                # ISO-8859-1 是 requests 的默认猜测，通常不准确
+                detected_encoding = response.encoding
+                logger.info(f"使用响应头编码: {detected_encoding}")
+            else:
+                # 2. 其次使用 apparent_encoding（基于内容推测）
+                detected_encoding = response.apparent_encoding
+                logger.info(f"使用推测编码: {detected_encoding}")
+            
+            response.encoding = detected_encoding
             html_content = response.text
-            logger.info(f"成功获取HTML内容，长度: {len(html_content)} 字符")
+            logger.info(f"成功获取HTML内容，长度: {len(html_content)} 字符，编码: {detected_encoding}")
             return html_content
             
         except requests.exceptions.RequestException as e:
@@ -105,6 +117,23 @@ def get_html_from_url(url: Optional[str],
                 return None
     
     return None
+
+def get_html_from_shtml_url(url):
+    try:     
+        # 1. 获取二进制响应内容
+        response = requests.get(url)
+        response.raise_for_status()  # 检查请求是否成功 
+        # 2. 手动用GBK解码二进制内容为Unicode字符串    
+        # 注意：必须先解码，再传给html5lib     
+        html_unicode = response.content.decode('utf-8', errors='replace')
+        return html_unicode
+    except UnicodeDecodeError:
+        print("GBK解码失败，尝试兼容编码gb2312...")
+        html_unicode = response.content.decode('gb2312', errors='replace') # type: ignore
+        return html_unicode
+    except Exception as e:  
+        print(f"解析出错: {e}")
+        return None
 
 def is_valid_url(url: str) -> bool:
     """检查URL是否有效"""

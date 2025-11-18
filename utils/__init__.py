@@ -4,6 +4,7 @@
 
 from .tool import (
     get_html_from_url,
+    get_html_from_shtml_url,
     get_few_days_ago,
     join_urls,
     is_valid_url,
@@ -15,6 +16,7 @@ from .tool import (
 
 __all__ = [
     'get_html_from_url',
+    'get_html_from_shtml_url',
     'get_few_days_ago',
     'join_urls',
     'is_valid_url',

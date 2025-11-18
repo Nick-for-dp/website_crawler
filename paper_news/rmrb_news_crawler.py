@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 
 from utils import get_html_from_url, join_urls
 from model import News, NewsResponse
+import requests
 
 
 class RMRBNewsCrawler:
@@ -22,10 +23,23 @@ class RMRBNewsCrawler:
         url = f"{self.basic_url}layout/{year_month}/{day}/node_01.html"
         return url
     
+    def _get_html_with_encoding(self, url, encoding='utf-8'):
+        """专门为人民日报网站获取HTML，使用指定编码"""
+        try:
+            response = requests.get(url, timeout=10, verify=False)
+            response.raise_for_status()
+            response.encoding = encoding
+            return response.text
+        except Exception as e:
+            print(f"获取HTML失败: {e}")
+            return None
+    
     def get_news_dict(self):
         rmrb_url = self.find_rmrb_paper_link()
-        html_text = get_html_from_url(url=rmrb_url)
-        soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib") # type: ignore
+        html_text = self._get_html_with_encoding(rmrb_url, encoding='utf-8')
+        if not html_text:
+            return {}
+        soup = BeautifulSoup(html_text, "html5lib") # type: ignore
         # 获取包含日报跳转链接的ul标签
         ul_tag = soup.find('ul', class_='news-list')
         # 遍历ul标签下的li标签,获取当日新闻的标题和链接
@@ -42,8 +56,10 @@ class RMRBNewsCrawler:
             news_dict = self.get_news_dict()
             news_list = []
             for title, url in news_dict.items():
-                child_html_text = get_html_from_url(url=url)
-                child_soup = BeautifulSoup(child_html_text.encode('utf-8'), "html5lib") # type: ignore
+                child_html_text = self._get_html_with_encoding(url, encoding='utf-8')
+                if not child_html_text:
+                    continue
+                child_soup = BeautifulSoup(child_html_text, "html5lib") # type: ignore
                 content_div_tag = child_soup.find('div', id="ozoom")
                 p_tags = content_div_tag.find_all('p') # type: ignore
                 child_content = ""
