@@ -44,7 +44,7 @@ class AiNewsCrawler:
             html_text = get_html_from_url(url=target_url)
             soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
             # 通过class锚定目标div
-            class_name = 'overflow-hidden space-y-[20px] text-[15px] leading-[25px] break-words mainColor post-content text-wrap'
+            class_name = 'overflow-hidden space-y-[28px] break-words post-content text-wrap'
             target_div = soup.find('div', class_=class_name)
             # 搜集所有p标签, 根据规则筛选重要文本内容
             p_tags = target_div.find_all('p') # type: ignore

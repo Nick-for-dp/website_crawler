@@ -15,8 +15,8 @@ class TransportNewsCrawler:
     def get_target_div(self):
         html_text = get_html_from_url(url=self.url)
         soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
-        # 依据class信息获取汇总新闻的div标签
-        div = soup.find('div', class_='list-group tab-content')
+        # 依据class信息获取汇总新闻的section标签
+        div = soup.find('section', class_='news-list-section')
         # 获取div下所有的分段栏目
         div_groups = div.find_all('div')  # type: ignore
         return div_groups
@@ -29,24 +29,23 @@ class TransportNewsCrawler:
         few_days = get_few_days_ago(day_offset=2)
         news_url_dict = {}
         for div in div_groups:
-            a_tag_list = div.find_all('a', class_='list-group-item') # type: ignore
+            a_tag_list = div.find_all('a', class_='news-link') # type: ignore
             for a_tag in a_tag_list:
                 # 获取新闻链接的发布日期
-                # for child in a_tag.children: # type: ignore
-                #     print(child)
-                span_tag = a_tag.find('span', class_='badge') # type: ignore
-                date = span_tag.get_text(strip=True)  # type: ignore
-                if date not in few_days:
+                date_span_tag = a_tag.find('span', class_='news-date') # type: ignore
+                news_date = date_span_tag.get_text(strip=True)  # type: ignore
+                if news_date not in few_days:
                     # 日期不在检索范围内则跳过
                     continue
                 href = a_tag.get('href', None) # type: ignore
-                title = a_tag.get('title', None) # type: ignore
+                title_span_tag = a_tag.find('span', class_='news-title') # type: ignore
+                title = title_span_tag.get_text(strip=True) # type: ignore
                 if not href or not title:
                     # 跳过没有链接或没有标题的a标签
                     continue
                 url = join_urls(self.url, href)
                 # 标题附上日期信息
-                title = f"{title};{date}"
+                title = f"{title};{news_date}"
                 news_url_dict[title] = url
         return news_url_dict
     
@@ -58,7 +57,7 @@ class TransportNewsCrawler:
                 html_text = get_html_from_url(url=url)
                 soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
                 # 获取文章内容所在的div
-                div = soup.find('div', id='Zoom')
+                div = soup.find('div', class_='view TRS_UEDITOR trs_paper_default trs_web')
                 p_tags = div.find_all('p') # type: ignore
                 text = "".join([p_tag.get_text(strip=True) for p_tag in p_tags])
                 # # 定位包含文章段落的span标签
@@ -79,6 +78,6 @@ class TransportNewsCrawler:
 
 
 if __name__ == '__main__':
-    url = r'https://www.mot.gov.cn/jiaotongyaowen/'
+    url = r'https://www.mot.gov.cn/xinwen/jiaotongyaowen/index.html'
     crawler = TransportNewsCrawler(url=url)
     print(crawler.get_news())
