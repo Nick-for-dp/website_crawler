@@ -1,4 +1,10 @@
-"""调用 DeepSeek（OpenAI 兼容协议）将当日新闻归纳为简报。API Key 走 .env 的 deepseek_api_key。"""
+"""调用大模型（OpenAI 兼容协议）将当日新闻归纳为简报。
+
+默认走 DeepSeek；服务器无法访问 api.deepseek.com 时，在 .env 配置国内可达的兼容端点即可切换：
+    llm_base_url  接入点地址，默认 https://api.deepseek.com/chat/completions
+    llm_model     模型名，默认 deepseek-chat
+    llm_api_key   非 DeepSeek 厂商的 Key；不填则复用 deepseek_api_key
+"""
 import os
 import logging
 from pathlib import Path
@@ -12,8 +18,10 @@ from model import News
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 logger = logging.getLogger(__name__)
 
-API_URL = "https://api.deepseek.com/chat/completions"
-MODEL = "deepseek-chat"
+# 允许 llm_base_url 只填到 .../v1 层级，自动补全 /chat/completions
+_base_url = os.getenv("llm_base_url", "").rstrip("/") or "https://api.deepseek.com"
+API_URL = _base_url if _base_url.endswith("/chat/completions") else f"{_base_url}/chat/completions"
+MODEL = os.getenv("llm_model", "deepseek-chat")
 SUMMARY_MAX_CHARS = 500  # 单条摘要截断长度，控制 token 消耗
 
 _PROMPT_TEMPLATE = """你是一位专业的新闻编辑。以下是 {date_str} 前后收集到的 {count} 条新闻（来源含新闻联播、商务部、交通部、AI日报）。
@@ -40,9 +48,9 @@ def summarize_news(news_list: List[News], date_str: str) -> Optional[str]:
     """将新闻列表归纳成 Markdown 简报，失败返回 None"""
     if not news_list:
         return None
-    api_key = os.getenv("deepseek_api_key")
+    api_key = os.getenv("llm_api_key") or os.getenv("deepseek_api_key")
     if not api_key:
-        logger.error("未在 .env 配置 deepseek_api_key")
+        logger.error("未在 .env 配置 llm_api_key / deepseek_api_key")
         return None
     prompt = _PROMPT_TEMPLATE.format(
         date_str=date_str, count=len(news_list), news_block=_format_news_block(news_list)
@@ -56,8 +64,8 @@ def summarize_news(news_list: List[News], date_str: str) -> Optional[str]:
         )
         resp.raise_for_status()
         digest = resp.json()["choices"][0]["message"]["content"].strip()
-        logger.info(f"简报生成成功，长度 {len(digest)} 字")
+        logger.info(f"简报生成成功，长度 {len(digest)} 字（{MODEL}）")
         return digest
     except Exception as e:
-        logger.error(f"DeepSeek 调用失败: {e}")
+        logger.error(f"大模型调用失败({API_URL}): {e}")
         return None
