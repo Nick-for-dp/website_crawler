@@ -15,7 +15,7 @@ async def get_transport_gov_news() -> NewsResponse:
     """
     try:
         # 创建交通部新闻爬取机器人
-        url = r'https://www.mot.gov.cn/jiaotongyaowen/'
+        url = r'https://www.mot.gov.cn/xinwen/jiaotongyaowen/index.html'
         transport_gov_news_crawler = TransportNewsCrawler(url=url)
         
         # 获取交通部新闻内容数据

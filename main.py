@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 # 导入API路由
-from api import cctv_news_router, ai_news_router, gov_news_router
+from api import cctv_news_router, ai_news_router, gov_news_router, paper_news_router
 
 
 app = FastAPI()
@@ -10,4 +10,5 @@ app = FastAPI()
 app.include_router(cctv_news_router, prefix="/api", tags=["CCTV News"])
 app.include_router(ai_news_router, prefix="/api", tags=["AI News"])
 app.include_router(gov_news_router, prefix="/api", tags=["GOVERNMENT News"])
+app.include_router(paper_news_router, prefix="/api", tags=["PAPER News"])
 

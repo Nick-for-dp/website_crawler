@@ -56,8 +56,8 @@ class TransportNewsCrawler:
             for title, url in news_url_dict.items():
                 html_text = get_html_from_url(url=url)
                 soup = BeautifulSoup(html_text.encode('utf-8'), "html5lib")  # type: ignore
-                # 获取文章内容所在的div
-                div = soup.find('div', class_='view TRS_UEDITOR trs_paper_default trs_web')
+                # 获取文章内容所在的div（文章页模板有 trs_web / trs_word 等变体，按 TRS_UEDITOR 锚定）
+                div = soup.find('div', class_=lambda c: c and 'TRS_UEDITOR' in c)
                 p_tags = div.find_all('p') # type: ignore
                 text = "".join([p_tag.get_text(strip=True) for p_tag in p_tags])
                 # # 定位包含文章段落的span标签

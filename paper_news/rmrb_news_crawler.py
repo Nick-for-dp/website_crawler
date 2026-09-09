@@ -18,8 +18,8 @@ class RMRBNewsCrawler:
     def find_rmrb_paper_link(self) -> Optional[str]:
         today = date.today()
         year, month, day = today.year, today.month, today.day
-        year_month = f"{str(year)}{str(month)}"
-        day = f"0{str(day)}" if day < 10 else day
+        year_month = f"{year}{month:02d}"
+        day = f"{day:02d}"
         url = f"{self.basic_url}layout/{year_month}/{day}/node_01.html"
         return url
     

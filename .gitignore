@@ -11,3 +11,9 @@ wheels/
 
 # env files
 .env*
+!.env.example
+
+# runtime data & logs
+data/
+logs/
+AGENTS.md
